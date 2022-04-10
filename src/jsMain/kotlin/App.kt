@@ -25,6 +25,7 @@ fun App() {
             style.height = "100%"
         }
     }
+
     LaunchedEffect(element) {
         val ref = element ?: return@LaunchedEffect
         ref.append(mapElement)
@@ -34,8 +35,53 @@ fun App() {
 
     var selected by remember { mutableStateOf(0) }
 
+    val map = remember {
+        google.maps.Map(mapElement, jso {
+            center = centerPoint
+            zoom = 2
+        })
+    }
+
+    val service = remember {
+        val service = google.maps.places.PlacesService(map)
+        service
+    }
+
+    val infoWindow = remember {
+        google.maps.InfoWindow()
+    }
+
+    LaunchedEffect(selected) {
+        marker?.setMap(null)
+        marker = null
+        //doesn't always work on fast switching
+        try {
 
 
+            val found = service.findPlace(places[selected]) as Array<dynamic>
+
+            val foundObj = found.firstOrNull() ?: return@LaunchedEffect
+
+            val location = foundObj.geometry.location
+
+            marker = google.maps.Marker(jso {
+                this.map = map
+                this.position = location
+            })
+//            google.maps.event.addListener(marker, "click") {
+//                infoWindow.setContent("${places[selected]} ${foundObj.name}")
+//                infoWindow.open(map)
+//
+//            }
+
+        } catch (e: FailedToFind) {
+            window.alert("${e.message}")
+        } catch (e: Throwable) {
+            if (e is CancellationException) throw e
+            else window.alert("${e.message}")
+        }
+
+    }
 
     Div({
         style {
@@ -81,56 +127,6 @@ fun App() {
 
             }
         }) {}
-
-    }
-
-
-    val map = remember {
-        google.maps.Map(mapElement, jso {
-            center = centerPoint
-            zoom = 2
-        })
-    }
-
-
-    val service = remember(map) {
-        val service = google.maps.places.PlacesService(map)
-        service
-    }
-
-    val infoWindow = remember(map) {
-        google.maps.InfoWindow()
-    }
-
-    LaunchedEffect(service, selected) {
-        marker?.setMap(null)
-        marker = null
-        //doesn't always work on fast switching
-        try {
-
-
-            val found = service.findPlace(places[selected]) as Array<dynamic>
-
-            val foundObj = found.firstOrNull() ?: return@LaunchedEffect
-
-            val location = foundObj.geometry.location
-
-            marker = google.maps.Marker(jso {
-                this.map = map
-                this.position = location
-            })
-//            google.maps.event.addListener(marker, "click") {
-//                infoWindow.setContent("${places[selected]} ${foundObj.name}")
-//                infoWindow.open(map)
-//
-//            }
-
-        } catch (e: FailedToFind) {
-            window.alert("${e.message}")
-        } catch (e: Throwable) {
-            if (e is CancellationException) throw e
-            else window.alert("${e.message}")
-        }
 
     }
 
