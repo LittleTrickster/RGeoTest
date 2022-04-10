@@ -34,6 +34,8 @@ external class google {
 
 }
 
+class FailedToFind(name: String) : Exception("failed to fetch $name")
+
 suspend fun google.maps.places.PlacesService.findPlace(name: String): dynamic {
     return suspendCoroutine<dynamic> {
         findPlaceFromQuery(jso<dynamic> {
@@ -44,7 +46,7 @@ suspend fun google.maps.places.PlacesService.findPlace(name: String): dynamic {
             if (status == statusOk) {
                 it.resume(result)
             } else {
-                it.resumeWithException(Exception("failed to fetch"))
+                it.resumeWithException(FailedToFind(name))
             }
 
 
